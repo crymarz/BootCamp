@@ -666,3 +666,80 @@ Values (7, 5, 10, '04/21/2021 09:00:10.000', 10)
 
 --Insert Into GuestInfo (GuestID, GuestNote, Birthday, Cakeday, StatusID) Values (3, 'Usually Drunk', '12/18/1994', '12/18/1994', 3)
 
+Drop Table if exists RoomStatus;
+
+Create Table RoomStatus
+(
+	StatusID INT Primary Key IDENTITY (1,1),
+	StatusName Varchar (50),
+	DateCreated DateTime NOT NULL Default GETDATE()
+);
+
+
+Drop Table If exists Rooms;
+
+Create Table Rooms 
+(
+	RoomID INT Primary Key IDENTITY (1,1), 
+	StatusID INT,
+	TavernID INT Foreign Key References Taverns (TavernID), 
+	DateCreated DateTime NOT NULL Default Getdate()
+);
+
+Drop Table IF exists RoomSales ;
+
+Create Table RoomSales
+(
+	RoomSaleID INT Primary Key IDENTITY (1,1),
+	GuestID INT Foreign Key references Guests(GuestID),
+	RoomID INT Foreign Key references Rooms (RoomID),
+	DateStayed DateTime,
+	Rate Money, 
+	DateCreated DateTime NOT NULL Default Getdate()
+);
+
+
+INSERT INTO RoomStatus (StatusName) Values ('Available'), ('Unavailable'), ('Occupied');
+
+
+Insert Into Rooms (StatusID, TavernID) Values (1,1), (1,1), (2,1), (2,1), (1,2), (1,2), (3,2), (2,2), (1,3), (1,3), (2,4), (1,5), (1,5), (1,5);
+
+
+Insert Into RoomSales (GuestID, RoomID, DateStayed, Rate) Values (1, 1, '9/22/2020', 50), (2, 3, '08/10/2021', 100), (3, 2, '01/01/2011', 200), (4, 5, '5/25/2021', 250),
+(5, 2, '01/01/2011', 15),(1, 2, '04/13/2020', 25), (3, 5, '07/03/2021', 25), (4, 5, '9/04/2021', 5);
+
+
+select * from GuestInfo where Birthday < '2000-01-01';
+
+Select RoomID From RoomSales Where Rate > 100;
+
+select Distinct GuestName From Guests;
+
+select * from Guests Order By GuestName ASC;
+
+Select TOP (10) Rate From RoomSales order by Rate desc;
+
+
+Select * From Class
+UNION
+Select * From GuestStatus
+UNION
+Select * From Roles
+UNION
+Select * From RoomStatus
+UNION
+Select * From Services
+UNION 
+Select * From Locations
+UNION
+Select * From Status;
+
+Select ClassID, 
+
+Case When GuestLevel <= 10 and GuestLevel >= 1 then '1-10' When GuestLevel <= 20 and GuestLevel >= 10 then '10-20' When GuestLevel <= 30 and GuestLevel >=20 Then '20-30' When GuestLevel <= 40 and GuestLevel >= 30 Then '30-40'
+When GuestLevel <= 50 and GuestLevel >= 40 then '40-50' When GuestLevel <=60 and Guestlevel >=50 Then '50-60' When GuestLevel <=70 and GuestLevel >= 60 then '60-70' When GuestLevel <= 80 and guestlevel >= 70 then '70-80'
+When GuestLevel	<= 90 and GuestLevel >= 80 then '80-90' When GuestLevel <= 100 and GuestLevel >= 90 Then '90-100' 
+
+END AS LvlGroup
+
+from GuestClass;
