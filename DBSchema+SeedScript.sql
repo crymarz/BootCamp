@@ -743,3 +743,39 @@ When GuestLevel	<= 90 and GuestLevel >= 80 then '80-90' When GuestLevel <= 100 a
 END AS LvlGroup
 
 from GuestClass;
+
+/* Class 4 */
+Select UserName From Users u
+Inner Join Roles r on u.RoleID = r.RoleID where r.RoleID = 1
+
+Update Taverns set OwnerID = 7 where TavernID = 2
+Update Taverns set OwnerID = 7 where TavernID = 3
+Update Taverns set OwnerID = 8 where TavernID = 4
+Update Taverns set OwnerID = 9 where TavernID = 5
+
+Select * From Users u
+Inner Join Roles r on u.RoleID = r.RoleID
+Inner Join Taverns t on u.UserID = t.OwnerID
+where r.RoleID = 1
+
+Select g.GuestName, c.classname, gc.guestlevel From Guests g
+Inner Join GuestClass gc on g.GuestID = gc.GuestID
+Inner Join Class c on gc.ClassID = c.ClassID
+Order by GuestName ASC
+
+Select tsp.Price,s.ServiceName from 
+(Select Top 10 * From ServiceSales order by Price Desc) tsp
+Inner Join Services s on tsp.serviceID = s.ServiceID
+
+Select GuestName From Guests g
+Inner Join (Select GuestID from GuestClass Group By GuestID Having Count (ClassID) > 1) a on g.GuestID = a.GuestID
+
+Select Distinct GuestName From Guests g
+Inner Join (Select GuestID from GuestClass Group By GuestID Having Count (ClassID) > 1) a on g.GuestID = a.GuestID
+Inner Join (Select GuestID from GuestClass where GuestLevel > 5) b on g.GuestID = b.GuestID
+
+Select g.GuestName, mgl.GuestLevel From Guests g
+Inner Join (Select GuestID, Max(GuestLevel) GuestLevel from GuestClass group by GuestID) mgl on g.GuestID = mgl.GuestID
+
+Select Distinct g.GuestName From Guests g
+Inner Join (Select GuestID FROM RoomSales where DateStayed Between '1/1/2020' and '12/31/2020') gs on g.GuestID = gs.GuestID
