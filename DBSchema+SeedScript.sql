@@ -779,3 +779,84 @@ Inner Join (Select GuestID, Max(GuestLevel) GuestLevel from GuestClass group by 
 
 Select Distinct g.GuestName From Guests g
 Inner Join (Select GuestID FROM RoomSales where DateStayed Between '1/1/2020' and '12/31/2020') gs on g.GuestID = gs.GuestID
+
+/* Class 5 */
+--#1
+Select u.UserName,r.RoleName from Users u
+Inner Join Roles r on u.RoleID = r.RoleID
+
+--#2
+select c.ClassName, cg.GuestCount from Class c 
+Join (select ClassID, COUNT(GuestID) as GuestCount From GuestClass group by ClassID) cg on c.ClassID = cg.ClassID
+
+--#3
+Select g.GuestName,gc.GuestLevel, c.ClassName,lg.LevelGroup From Guests g
+Inner Join 
+	GuestClass gc on g.GuestID = gc.GuestID
+Inner Join
+	Class c on gc.ClassID = c.ClassID
+Inner Join 
+	(Select GuestLevel,
+		Case 
+			When GuestLevel BETWEEN 1 and 5 THEN 'Beginner'
+			When GuestLevel BETWEEN 5 and 10 THEN 'Intermediate'
+			ELSE 'Expert'
+		End As LevelGroup
+		From GuestClass) lg on gc.GuestLevel = lg.GuestLevel
+Order by g.GuestName ASC
+
+--#4
+Create Function dbo.getgrouping(@GuestLevel INT)
+RETURNS Varchar (50)
+As 
+Begin 
+Declare @ret Varchar (50)
+Select @ret = (Select top 1
+		Case 
+		When @GuestLevel BETWEEN 1 and 5 THEN 'Beginner'
+		When @GuestLevel BETWEEN 5 and 10 THEN 'Intermediate'
+		ELSE 'Expert'
+		End As LevelGroup
+	From GuestClass)
+Return @ret
+END
+
+-- #5 OPEN ROOMS
+Create Function dbo.openrooms (@DateStayed DateTime)
+Returns Table
+AS
+Return
+(
+Select r.RoomID,t.TavernName,rst.StatusName from Rooms r 
+Inner Join Taverns t on r.tavernid = t.tavernid
+Inner Join RoomSales rs on r.RoomID = rs.RoomID
+Inner Join RoomStatus rst on r.StatusID = rst.StatusID
+Where DateStayed <> @DateStayed
+)
+
+--#6 Modify for price range
+Alter Function dbo.openrooms (@MinRate Money, @MaxRate Money)
+Returns Table
+AS
+Return
+(
+Select r.RoomID,t.TavernName,rst.StatusName,mxrt.MaxRate,mnrt.MinRate from Rooms r 
+Inner Join Taverns t on r.tavernid = t.tavernid
+Inner Join RoomSales rs on r.RoomID = rs.RoomID
+Inner Join RoomStatus rst on r.StatusID = rst.StatusID
+Inner Join (Select RoomID, Max(Rate) MaxRate from RoomSales Group by RoomID) mxrt on r.RoomID = mxrt.RoomID
+Inner Join (Select RoomID, Min(Rate) MinRate From RoomSales Group by RoomID) mnrt on r.RoomID = mnrt.RoomID
+Where mxrt.MaxRate <= @MaxRate and mnrt.MinRate >= @MinRate
+)
+
+--#7 Create a Room Trigger
+Create Trigger CreateRoom
+ON dbo.RoomSales
+AFTER INSERT
+AS BEGIN
+INSERT INTO Rooms (StatusID, TavernID) VALUES (1, 1)
+INSERT INTO RoomSales (GuestID, RoomID, DateStayed, Rate) 
+VALUES (1, (Select Top 1 RoomID from Rooms), '10/19/2021',
+(Select (MinRate - 0.01) Rate from dbo.openrooms (0.00,500.00)))
+END
+GO
